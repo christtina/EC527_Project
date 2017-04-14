@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define IDENT 0.0
 
 typedef int data_t;
 /* Create abstract data type for matrix */
@@ -84,31 +85,45 @@ data_t *get_matrix_start(matrix_ptr m)
   return m->data;
 }
 
-// Russian ***************************************************************************************
-matrix_ptr matrix_new(int n) {
-  //Создание новой матрицы
+//***************************************************************************************
+matrix_ptr matrix_new(int len) {
+  long int i;
 
-  int i;
-  matrix_ptr m = (matrix_ptr)malloc(sizeof(int*)*n);
-  for(i = 0;i < n;i++) {
-    m[i] = (int*)malloc(sizeof(int)*n);
+  // Allocate and declare header structure 
+  matrix_ptr result = (matrix_ptr) malloc(sizeof(matrix_rec));
+  if (!result) return NULL;  // Couldn't allocate storage 
+  result->len = len;
+
+  // Allocate and declare array 
+  if (len > 0) {
+    data_t *data = (data_t *) calloc(len*len, sizeof(data_t));
+    if (!data) {
+	  free((void *) result);
+	  printf("\n COULDN'T ALLOCATE STORAGE \n", result->len);
+	  return NULL;  // Couldn't allocate storage
+	}
+	result->data = data;
   }
-  return m;
+  else result->data = NULL;
+
+  return result;
 }
 
-void matrix_fill(matrix_ptr a, int n) {
-  //Заполнение матрицы рандомными значениями
+int matrix_fill(matrix_ptr m, int len) {
+  
+long int i;
 
-  int i, j;
-  for (i = 0; i < n; i++) {
-    for (j = 0; j < n; j++) {
-      a[i*n +j] = 0;
-    }
+  if (len > 0) {
+    m->len = len;
+    for (i = 0; i < len*len; i++)
+      m->data[i] = (data_t)(i);
+    return 1;
   }
+  else return 0;
 }
 
 matrix_ptr matrix_mult(matrix_ptr a, matrix_ptr b, int n) {
-  //Умножение матриц
+  
 
   int i, j, k;
   matrix_ptr c = matrix_new(n);
@@ -136,7 +151,7 @@ matrix_ptr matrix_mult(matrix_ptr a, matrix_ptr b, int n) {
 }
 
 matrix_ptr matrix_add(matrix_ptr a, matrix_ptr b, int n) {
-  //Сложение матриц
+  
 
   int i, j, k;
   matrix_ptr c = matrix_new(n);
@@ -162,7 +177,7 @@ matrix_ptr matrix_add(matrix_ptr a, matrix_ptr b, int n) {
   return c;
 }
 matrix_ptr matrix_sub(matrix_ptr a, matrix_ptr b, int n) {
-  //Вычитание матриц
+  
 
   int i, j, k;
   matrix_ptr c = matrix_new(n);
@@ -189,27 +204,27 @@ matrix_ptr matrix_sub(matrix_ptr a, matrix_ptr b, int n) {
 }
 
 void freememory(matrix_ptr a, int n){
-	//Очистка памяти
-
-  int i;
-	for (i = 0; i < n; i++){
-		free(a[i]);
-	}
+	
+	//free(a -> len);
+	free(a -> data);
 	free(a);
+
 }
 
 matrix_ptr strassen(matrix_ptr a, matrix_ptr b, int n, int k){
-  //Алгоритм штрассена
-
-  int i, j;
   
-  //Проверка на размерность текущей матрицы
+
+  int i, j, kk, jj;
+  
+  
   if (n <= k){
    matrix_ptr c= matrix_mult(a, b ,n);
     return c;
   }
 
   int half = n/2;
+  
+  int block_size = half;
   matrix_ptr a11, a12, a21, a22, b11, b12, b21, b22;
 
   a11 = matrix_new(half);
@@ -221,18 +236,43 @@ matrix_ptr strassen(matrix_ptr a, matrix_ptr b, int n, int k){
   b21 = matrix_new(half);
   b22 = matrix_new(half);
 
-  //Создание 4 подматриц для матриц А и В
+
+
+
+  
+  
+   for (kk = 0; kk < length; kk += block_size)
+    for (jj = 0; jj < length; jj += block_size)
+      for (i = 0; i < length; i++)
+		for (j = jj; j< jj+block_size; j++) {
+	  		for (k = kk; k < kk+block_size; k++)
+			if(blank == blank){
+              a11[i*length + k] = a0[i*length+k];
+			}else if( ){
+
+			
+			}else if() {
+			
+			}else{
+		
+			}
+	    	
+	  		
+		}
+	}
+
+
   for (i = 0; i < half; i++) {
     for(j = 0; j < half; j++) {
-      a11[i][j] = a[i][j];
-      a12[i][j] = a[i][j+half];
-      a21[i][j] = a[i+half][j];
-      a22[i][j] = a[i+half][j+half];
+      a11[i*half+j] = a[i*half+j];
+      a12[i*half+j] = a[i*half +(j+half)]; 
+      a21[i*half+j] = a[(i+half)*half + (j)]; 
+      a22[i*half+j] = a[(i+half)*half + (j+half)];
 
-      b11[i][j] = b[i][j];
-      b12[i][j] = b[i][j+half];
-      b21[i][j] = b[i+half][j];
-      b22[i][j] = b[i+half][j+half];
+      b11[i*half+j] = b[i*half+j];
+      b12[i*half+j] = b[i*half + (j+half)];
+      b21[i*half+j] = b[(i+half)*half+j];
+      b22[i*half+j] = b[(i+half)*half + (j+half)];
     }
   }
 
@@ -265,17 +305,17 @@ matrix_ptr strassen(matrix_ptr a, matrix_ptr b, int n, int k){
 
   
   matrix_ptr c;
-
+  printf("Storing the value in C");
   c = matrix_new(n);
   for (i = 0; i < half; i++) {
     for(j = 0; j < half; j++) {
-      c[i][j] = c11[i][j];
-      c[i][j+half] = c12[i][j];
-      c[i+half][j] = c21[i][j];
-      c[i+half][j+half] = c22[i][j];
+      c[i*half+j] = c11[i*half+j];
+      c[i*half +(j+half)] = c12[i*half+j];
+      c[(i+half)*half + j] = c21[i*half+j];
+      c[(i+half)*half + (j+half)] = c22[i*half+j];
     }
   }
-
+  printf("I am going to delete stuff!!!\n");
   freememory(a11, half);
   freememory(a12, half);
   freememory(a21, half);
@@ -303,9 +343,9 @@ int main() {
 
   /*
 
-  Перемножение матриц 1024*1024
+  1024*1024
 
-    Переход к обычному уумножению при разных значениях k:
+    k:
 
       k = 16  : 3.532507
       k = 32  : 3.174222
@@ -329,15 +369,15 @@ int main() {
   clock_t t = clock();
   c = matrix_mult(a, b, n);
   t = clock()-t;
-  printf("Обычное умножение - %f\n", ((double)t/CLOCKS_PER_SEC));
+  printf("Matrix Multiplication - %f\n", ((double)t/CLOCKS_PER_SEC));
 
-  printf("Начало перемножения методом Штрассена \n");
-
+ 
+  
   t = clock();
   d = strassen(a, b, n, k);
   t = clock()-t;
 
-  printf("Умножение методом Штрассена - %f\n", ((double)t/CLOCKS_PER_SEC));
+  printf("Strassen - %f\n", ((double)t/CLOCKS_PER_SEC));
   
   return 0;
 }
